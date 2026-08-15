@@ -155,20 +155,43 @@ export default {
         // back with no dimensions and the "wrong size" warning in the page can
         // never fire, which is the one thing the listing exists to show.
         const listed = await bucket.list({ limit: 500, include: ['customMetadata'] });
-        const frames = listed.objects
-          .filter((o) => !o.key.includes('/') && o.key.toLowerCase().endsWith('.png'))
-          .map((o) => ({
-            name: o.key,
-            label: o.key.replace(/\.png$/i, ''),
-            size: o.size,
-            uploaded: o.uploaded,
-            // Recorded at upload so the list can show it without fetching every
-            // file. Absent on anything uploaded through the Cloudflare dashboard
-            // instead of this page, which the UI reports rather than guesses at.
-            width: Number(o.customMetadata?.width) || null,
-            height: Number(o.customMetadata?.height) || null,
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label));
+        const frames = await Promise.all(
+          listed.objects
+            .filter((o) => !o.key.includes('/') && o.key.toLowerCase().endsWith('.png'))
+            .map(async (o) => {
+              // Dimensions are recorded at upload, so anything this page put
+              // there costs nothing to report. A frame uploaded through the
+              // Cloudflare dashboard instead has no such metadata, and those
+              // are exactly the ones worth checking, since nothing validated
+              // them on the way in. So read their header rather than leaving
+              // the size unknown: a PNG's width and height are in the first 33
+              // bytes, and a ranged read costs one cheap operation instead of
+              // pulling a whole file back.
+              let width = Number(o.customMetadata?.width) || null;
+              let height = Number(o.customMetadata?.height) || null;
+              if (!width) {
+                try {
+                  const head = await bucket.get(o.key, { range: { offset: 0, length: 33 } });
+                  if (head) {
+                    const png = inspectPng(new Uint8Array(await head.arrayBuffer()));
+                    if (png.ok) { width = png.width; height = png.height; }
+                  }
+                } catch {
+                  // Left as null, which the page shows as "size unknown". Not
+                  // worth failing a whole listing over.
+                }
+              }
+              return {
+                name: o.key,
+                label: o.key.replace(/\.png$/i, ''),
+                size: o.size,
+                uploaded: o.uploaded,
+                width,
+                height,
+              };
+            }),
+        );
+        frames.sort((a, b) => a.label.localeCompare(b.label));
         return json({ type, expected: { width: spec.width, height: spec.height }, frames }, 200, cors);
       }
 

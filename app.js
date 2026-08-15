@@ -12,7 +12,7 @@
  */
 
 // Set this to the Worker's address after `wrangler deploy` prints it.
-const WORKER = 'https://overlay-uploader.<your-subdomain>.workers.dev';
+const WORKER = 'https://overlay-uploader.handandeye.workers.dev';
 
 // The two buckets and the exact frame each takes. Repeated from the booth's
 // OUTPUT_PRESETS and from the Worker, and checked in all three places on
