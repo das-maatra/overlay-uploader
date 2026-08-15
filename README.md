@@ -51,11 +51,18 @@ you only, and honoured by the page **only** when it is being served from
 localhost. That last part is what stops the file authenticating the published
 page if it were ever committed by mistake.
 
-Port 8081 specifically, because that is the origin named in the Worker's
-`ALLOWED_ORIGINS`. Served on any other port the browser blocks every request as
-a cross origin one. It binds to 127.0.0.1 rather than the default 0.0.0.0, since
-Python's `http.server` hands out any file under this folder, `.git` included, to
-whoever asks, and none of that needs to be reachable from the venue wifi.
+It is reachable from any device on the same wifi, the way the booth is. From
+another device the phrase does go in the URL, `http://<mac-ip>:8081/#phrase`,
+because `local-key.js` is served to this machine only and the page trusts it
+only when the hostname is localhost. `serve.sh` prints both links.
+
+The serving is done by `serve.py`, not `python -m http.server`. That one hands
+out every file under this folder, `.git` and the whole commit history included,
+to whoever can reach the port. `serve.py` answers for three files and 404s
+everything else.
+
+The booth's `start.sh` starts this automatically when the folder is checked out
+beside it, so it comes up with the booth.
 
 **This is not a test environment.** Same page, same Worker, same buckets. A
 delete here is a delete from the museum's booth. The only thing that differs is
