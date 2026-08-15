@@ -41,6 +41,22 @@ photograph completely.
 Deleting is permanent. R2 has no undo without versioning, so the page makes you
 type the frame's name first.
 
+## Running it from a checkout
+
+    ./serve.sh
+
+Then open `http://localhost:8081/#the-hand-the-eye`.
+
+Port 8081 specifically, because that is the origin named in the Worker's
+`ALLOWED_ORIGINS`. Served on any other port the browser blocks every request as
+a cross origin one. It binds to 127.0.0.1 rather than the default 0.0.0.0, since
+Python's `http.server` hands out any file under this folder, `.git` included, to
+whoever asks, and none of that needs to be reachable from the venue wifi.
+
+**This is not a test environment.** Same page, same Worker, same buckets. A
+delete here is a delete from the museum's booth. The only thing that differs is
+where the HTML came from.
+
 ## Deploying
 
 The page deploys itself: pushing to `main` publishes it through GitHub Pages.

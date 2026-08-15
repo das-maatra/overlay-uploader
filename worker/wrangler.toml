@@ -23,7 +23,11 @@ bucket_name = "photo-1-member"
 # Not the security boundary. CORS is enforced by browsers and ignored by
 # anything else, so this stops another site embedding the tool and nothing more.
 # The phrase is what protects the buckets.
-ALLOWED_ORIGINS = "https://das-maatra.github.io"
+#
+# localhost is here so the page can be run from a checkout with ./serve.sh,
+# against these same live buckets. It is not a second environment: a delete
+# from localhost is a delete from the museum's booth.
+ALLOWED_ORIGINS = "https://das-maatra.github.io,http://localhost:8081"
 
 # ACCESS_PHRASE is deliberately absent. It is a secret, set once with
 #
