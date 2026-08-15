@@ -18,6 +18,30 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT=8081
+KEYFILE=local-key.js
+
+# The phrase, so http://localhost:8081/ works without it on the end of the URL.
+#
+# Written here rather than committed, because this repository is public and the
+# phrase is the only thing standing between the internet and a bucket the
+# museum's booth reads. Gitignored, and readable by this user only. app.js
+# ignores it unless the page is actually being served from localhost.
+if [ ! -f "$KEYFILE" ]; then
+  printf '\n\033[1mFirst run\033[0m\n'
+  printf '  No %s yet. Enter the phrase once and it will be remembered.\n' "$KEYFILE"
+  printf '  Phrase: ' >&2
+  read -rs phrase
+  printf '\n' >&2
+  if [ -z "$phrase" ]; then
+    printf '  \033[31m✗\033[0m Nothing entered. Run again, or use the #phrase on the URL.\n' >&2
+    exit 1
+  fi
+  # Written through printf %s and JSON-quoted, so a phrase containing a quote
+  # cannot end the string early and turn the rest of it into code.
+  printf 'window.OVERLAY_KEY = %s;\n' "$(printf '%s' "$phrase" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > "$KEYFILE"
+  chmod 600 "$KEYFILE"
+  printf '  \033[32m✓\033[0m Saved to %s (gitignored, this user only)\n' "$KEYFILE"
+fi
 
 if lsof -ti ":$PORT" >/dev/null 2>&1; then
   printf '  \033[31m✗\033[0m Something is already listening on %s. Stop it first:\n' "$PORT" >&2
@@ -26,8 +50,8 @@ if lsof -ti ":$PORT" >/dev/null 2>&1; then
 fi
 
 printf '\n\033[1mOverlay uploader\033[0m\n'
-printf '  \033[32m✓\033[0m http://localhost:%s/#the-hand-the-eye\n' "$PORT"
-printf '    The part after the # is required. Without it the page will not work.\n'
+printf '  \033[32m✓\033[0m http://localhost:%s/\n' "$PORT"
+printf '    No phrase needed on the URL here; %s supplies it.\n' "$KEYFILE"
 printf '    Ctrl-C to stop.\n\n'
 
 exec python3 -m http.server "$PORT" --bind 127.0.0.1

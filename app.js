@@ -28,7 +28,21 @@ const TYPES = [
 // have to exist as a folder in this public repository, which publishes it. A
 // query string is sent to GitHub's servers and lands in their logs. The
 // fragment is the one part of a URL that never leaves the browser.
-const PHRASE = decodeURIComponent(location.hash.replace(/^#/, '')).trim();
+const FRAGMENT = decodeURIComponent(location.hash.replace(/^#/, '')).trim();
+
+// Running from a checkout, the phrase can come from local-key.js instead, so
+// http://localhost:8081/ works on its own. That file is gitignored and written
+// by ./serve.sh; it exists on one Mac and never in this repository.
+//
+// **Only ever trusted on localhost.** Not a formality: if that file were ever
+// committed by accident, or served from anywhere else, this check is what stops
+// the published page authenticating itself to every visitor. The hostname is
+// read from location rather than passed in, so nothing in the file can claim
+// otherwise.
+const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+const PHRASE = FRAGMENT || (LOCAL && typeof window.OVERLAY_KEY === 'string'
+  ? window.OVERLAY_KEY.trim()
+  : '');
 
 const el = (tag, props = {}, ...kids) => {
   const n = Object.assign(document.createElement(tag), props);

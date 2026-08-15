@@ -45,7 +45,11 @@ type the frame's name first.
 
     ./serve.sh
 
-Then open `http://localhost:8081/#the-hand-the-eye`.
+Then open `http://localhost:8081/`. No phrase on the URL here: the first run
+asks for it once and writes `local-key.js`, which is gitignored, readable by
+you only, and honoured by the page **only** when it is being served from
+localhost. That last part is what stops the file authenticating the published
+page if it were ever committed by mistake.
 
 Port 8081 specifically, because that is the origin named in the Worker's
 `ALLOWED_ORIGINS`. Served on any other port the browser blocks every request as
