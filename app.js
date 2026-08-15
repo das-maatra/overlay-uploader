@@ -207,8 +207,16 @@ function bucketSection(spec) {
   // --- upload ------------------------------------------------------------
   const input = el('input', { type: 'file', accept: 'image/png', multiple: true });
   const pick = el('button', { className: 'primary' }, 'Choose PNG files');
+  // Two wordings, one shown per pointer type by the stylesheet. Telling someone
+  // on a phone to drop a file onto a panel is not just useless, it points away
+  // from the button that is their only way in.
   const drop = el('div', { className: 'drop' },
-    el('p', {}, `Drop ${spec.width} x ${spec.height} PNGs here, with transparency`),
+    el('p', {},
+      el('span', { className: 'fine-only' },
+        `Drop ${spec.width} x ${spec.height} PNGs here, with transparency`),
+      el('span', { className: 'coarse-only' },
+        `${spec.width} x ${spec.height} PNGs, with transparency`),
+    ),
     pick, input,
   );
   section.append(drop);
