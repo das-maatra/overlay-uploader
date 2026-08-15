@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Overlay frames</title>
+<meta name="theme-color" content="#030407" />
+<meta name="robots" content="noindex, nofollow" />
+
+<!--
+  Instrument Sans and Serif from Google, unlike the booth, which vendors them.
+  The booth has no internet at the venue and a missing webfont there means the
+  wordmark silently becoming Georgia in front of a visitor. This page is only
+  ever opened over the internet, so the reason to vendor them does not apply.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+
+<style>
+/*
+  The venue's palette, taken from the booth's tailwind.config in
+  frontend/index.html so the two cannot drift apart. Written as custom
+  properties and plain CSS rather than pulling in Tailwind: this page is four
+  controls and a grid, and a utility framework would be most of its weight.
+*/
+:root {
+  --page:      #030407;
+  --base:      #080D1A;
+  --sheet:     #0D1528;
+  --line:      rgba(244,233,209,0.14);
+  --line-soft: rgba(244,233,209,0.08);
+  --text-3:    rgba(244,233,209,0.32);
+  --text-2:    rgba(244,233,209,0.55);
+  --text-1:    rgba(244,233,209,0.90);
+  --candlewax: #F4E9D1;
+  --flame:     #D53D30;
+  --ember:     #B43125;
+  --jade-lit:  #6FA97E;
+  --amber:     #B97522;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text-1);
+  font-family: 'Instrument Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The brand's chamfered "ticket corner", from the booth's own stylesheet. It is
+   what stops a dark page like this reading as a generic admin dashboard. Two
+   sizes, because a 9px chamfer eats the whole corner of a small chip. */
+.oct    { clip-path: polygon(9px 0, calc(100% - 9px) 0, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0 calc(100% - 9px), 0 9px); }
+.oct-sm { clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px); }
+
+.caps      { text-transform: uppercase; letter-spacing: 0.18em; }
+.caps-wide { text-transform: uppercase; letter-spacing: 0.24em; }
+
+header {
+  display: flex; align-items: baseline; gap: 0.9rem; flex-wrap: wrap;
+  padding: calc(1.5rem + env(safe-area-inset-top, 0px)) 1.5rem 1.1rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+header h1 {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400; font-size: 1.75rem; margin: 0; color: var(--candlewax);
+}
+header .sub { font-size: 0.7rem; color: var(--text-3); }
+main { padding: 1.5rem; max-width: 1100px; margin: 0 auto; }
+
+/* Both buckets are always on screen rather than behind tabs. There are two of
+   them and they hold different sizes, so a designer comparing "did I put that
+   in the right one" should not have to remember what the other tab looked
+   like. */
+.bucket { margin-bottom: 2.75rem; }
+.bucket-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+  padding-bottom: 0.6rem; border-bottom: 1px solid var(--line);
+}
+.bucket-head h2 { font-size: 0.78rem; font-weight: 600; margin: 0; color: var(--text-1); }
+.bucket-head .spec { font-size: 0.68rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+.grid {
+  display: grid; gap: 1rem; margin-top: 1.1rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.card { background: var(--base); border: 1px solid var(--line-soft); padding: 0.75rem; }
+/* A checkerboard behind every preview. These are transparent frames, and on a
+   flat dark ground a black border is indistinguishable from a hole. */
+.thumb {
+  aspect-ratio: 3 / 2; width: 100%; display: grid; place-items: center;
+  background-color: #0b0b0f;
+  background-image:
+    linear-gradient(45deg, rgba(244,233,209,0.05) 25%, transparent 25%, transparent 75%, rgba(244,233,209,0.05) 75%),
+    linear-gradient(45deg, rgba(244,233,209,0.05) 25%, transparent 25%, transparent 75%, rgba(244,233,209,0.05) 75%);
+  background-size: 16px 16px; background-position: 0 0, 8px 8px;
+}
+.thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.thumb .loading { font-size: 0.65rem; color: var(--text-3); }
+.card .name {
+  margin-top: 0.6rem; font-size: 0.82rem; font-weight: 600; color: var(--text-1);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card .meta { margin-top: 0.15rem; font-size: 0.65rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.card .meta .bad { color: var(--flame); }
+
+button {
+  font-family: inherit; font-size: 0.68rem; font-weight: 600;
+  padding: 0.45rem 0.8rem; border: 1px solid var(--line); cursor: pointer;
+  background: var(--sheet); color: var(--text-2); transition: all 150ms ease;
+}
+button:hover:not(:disabled) { background: #131d36; color: var(--text-1); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button.danger { border-color: rgba(213,61,48,0.4); color: var(--flame); }
+button.danger:hover:not(:disabled) { background: var(--ember); color: var(--candlewax); border-color: var(--ember); }
+button.primary { background: var(--ember); border-color: var(--ember); color: var(--candlewax); }
+button.primary:hover:not(:disabled) { background: var(--flame); border-color: var(--flame); }
+.card button { margin-top: 0.6rem; width: 100%; }
+
+/* Dashed rather than solid, and the whole panel is the drop target. The one
+   action on this page that is not a button is dragging a file, so it should
+   look like somewhere a file goes. */
+.drop {
+  margin-top: 1.1rem; padding: 1.4rem; text-align: center;
+  border: 1px dashed var(--line); background: rgba(13,21,40,0.4);
+  transition: all 150ms ease;
+}
+.drop.over { border-color: var(--flame); background: rgba(213,61,48,0.06); }
+.drop p { margin: 0 0 0.7rem; font-size: 0.72rem; color: var(--text-3); }
+.drop input[type=file] { display: none; }
+
+.msg { margin-top: 0.8rem; font-size: 0.72rem; line-height: 1.5; padding: 0.6rem 0.8rem; }
+.msg.err  { color: var(--flame);    background: rgba(213,61,48,0.08); border: 1px solid rgba(213,61,48,0.25); }
+.msg.ok   { color: var(--jade-lit); background: rgba(111,169,126,0.07); border: 1px solid rgba(111,169,126,0.22); }
+.msg.warn { color: var(--amber);    background: rgba(185,117,34,0.08); border: 1px solid rgba(185,117,34,0.25); }
+.empty { margin-top: 1.1rem; font-size: 0.72rem; color: var(--text-3); }
+
+/* The whole page is replaced by this when the link carries no phrase, rather
+   than the controls being disabled. Nothing here works without one, and a
+   screen of dead buttons invites people to hunt for the one that still does. */
+.gate { max-width: 30rem; margin: 5rem auto; padding: 0 1.5rem; text-align: center; }
+.gate h1 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 1.6rem; color: var(--candlewax); margin: 0 0 0.8rem; }
+.gate p { font-size: 0.78rem; color: var(--text-2); line-height: 1.6; }
+.gate code { color: var(--text-1); background: var(--sheet); padding: 0.1rem 0.35rem; font-size: 0.72rem; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="app.js"></script>
+</body>
+</html>

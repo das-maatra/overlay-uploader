@@ -1,0 +1,32 @@
+name = "overlay-uploader"
+main = "src/index.js"
+compatibility_date = "2026-08-15"
+
+# The buckets, reached by binding rather than by API token. Cloudflare hands the
+# bucket to the running Worker, so no access key or secret exists in this
+# project and there is nothing here to leak or rotate. The booth's own
+# credentials stay Object Read only: it never writes a frame, and the ability to
+# delete one lives only here, behind the phrase.
+[[r2_buckets]]
+binding = "STANDARD"
+bucket_name = "photo-1-standard"
+
+[[r2_buckets]]
+binding = "MEMBER"
+bucket_name = "photo-1-member"
+
+[vars]
+# Origins allowed to call this from a browser, comma separated. A list rather
+# than one value so the page can move to another GitHub account with both live
+# at once, instead of the move needing a flag day.
+#
+# Not the security boundary. CORS is enforced by browsers and ignored by
+# anything else, so this stops another site embedding the tool and nothing more.
+# The phrase is what protects the buckets.
+ALLOWED_ORIGINS = "https://das-maatra.github.io"
+
+# ACCESS_PHRASE is deliberately absent. It is a secret, set once with
+#
+#   npx wrangler secret put ACCESS_PHRASE
+#
+# so that it lives in Cloudflare and never in this repository, which is public.
