@@ -49,23 +49,13 @@ const json = (data, status, extra) =>
  *  single value so the page can move between GitHub accounts with both live at
  *  once, instead of a move needing a flag day. Not a security boundary: CORS is
  *  enforced by browsers and ignored by curl. The phrase is the boundary. */
-// A page served by ./serve.py off the Mac running the booth, reached from an
-// iPad on the same wifi. The address comes from DHCP and changes, so it cannot
-// be listed; the shape is matched instead. Private ranges and .local only, so
-// this never matches a public host.
-//
-// Widening what browsers may call from is not widening who may call: every one
-// of these still has to present the phrase, and anything that is not a browser
-// ignores CORS entirely.
-const LAN_ORIGIN = /^http:\/\/(localhost|127\.0\.0\.1|(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}|[a-z0-9-]+\.local):\d{2,5}$/i;
-
 function corsHeaders(request, env) {
   const allowed = (env.ALLOWED_ORIGINS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
   const origin = request.headers.get('Origin') || '';
-  const ok = allowed.includes(origin) || LAN_ORIGIN.test(origin);
+  const ok = allowed.includes(origin);
   return {
     'access-control-allow-origin': ok ? origin : allowed[0] || '',
     'access-control-allow-methods': 'GET,PUT,DELETE,OPTIONS',

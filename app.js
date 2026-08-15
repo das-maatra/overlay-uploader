@@ -30,19 +30,22 @@ const TYPES = [
 // fragment is the one part of a URL that never leaves the browser.
 const FRAGMENT = decodeURIComponent(location.hash.replace(/^#/, '')).trim();
 
-// Running from a checkout, the phrase can come from local-key.js instead, so
-// http://localhost:8081/ works on its own. That file is gitignored and written
-// by ./serve.sh; it exists on one Mac and never in this repository.
+// Set by local-config.js, which only serve.py serves, and only when it has a
+// phrase to work with. It means this page is being served from a checkout on
+// someone's Mac, and that server will attach the phrase to each API call
+// itself.
 //
-// **Only ever trusted on localhost.** Not a formality: if that file were ever
-// committed by accident, or served from anywhere else, this check is what stops
-// the published page authenticating itself to every visitor. The hostname is
-// read from location rather than passed in, so nothing in the file can claim
-// otherwise.
-const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-const PHRASE = FRAGMENT || (LOCAL && typeof window.OVERLAY_KEY === 'string'
-  ? window.OVERLAY_KEY.trim()
-  : '');
+// So requests go to /api on this same origin rather than to the Worker, and
+// carry no phrase at all: the browser never receives one, and nothing has to be
+// typed on any device that opens the page. Same origin also means no CORS in
+// that path and no preflight.
+//
+// On GitHub Pages this file does not exist, the flag is undefined, and the
+// phrase in the fragment is the only way in, exactly as before.
+const PROXY = window.OVERLAY_PROXY === true;
+const BASE = PROXY ? '' : WORKER;
+const PHRASE = PROXY ? '' : FRAGMENT;
+const AUTHED = PROXY || !!FRAGMENT;
 
 const el = (tag, props = {}, ...kids) => {
   const n = Object.assign(document.createElement(tag), props);
@@ -52,12 +55,16 @@ const el = (tag, props = {}, ...kids) => {
 const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(0)} kB`);
 
 async function api(path, { method = 'GET', body, type, name } = {}) {
-  const url = new URL(WORKER + path);
+  // Relative when proxied, absolute otherwise. new URL needs a base for the
+  // relative case, and location.origin is the right one either way.
+  const url = new URL(BASE + path, location.origin);
   if (type) url.searchParams.set('type', type);
   if (name) url.searchParams.set('name', name);
   const res = await fetch(url, {
     method,
-    headers: { 'x-overlay-key': PHRASE },
+    // No phrase when proxied: serve.py attaches it, and sending an empty one
+    // here would be the browser holding a credential it has no need of.
+    headers: PROXY ? {} : { 'x-overlay-key': PHRASE },
     body,
   });
   if (path === '/api/file') {
@@ -281,7 +288,7 @@ function bucketSection(spec) {
 function render() {
   const root = document.getElementById('root');
 
-  if (!PHRASE) {
+  if (!AUTHED) {
     // The whole page, not a disabled version of it. Nothing here works without
     // the phrase, and a screen of dead controls invites people to hunt for the
     // one that still does.

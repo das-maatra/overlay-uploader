@@ -11,23 +11,22 @@
 # hands out every file under this folder to whoever asks, .git and the whole
 # commit history included. serve.py answers for three files and 404s the rest.
 #
-# From this Mac, http://localhost:8081/ needs no phrase: local-key.js supplies
-# it. From another device it does, because the page only trusts that file when
-# it is being served from localhost, so the network link printed below carries
-# the phrase in its fragment.
+# No device needs the phrase here. serve.py holds it and attaches it to each
+# API call on the way to the Worker, so the browser never receives one and
+# nothing has to be typed, on this Mac or on an iPad across the room.
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
 PORT=8081
-KEYFILE=local-key.js
+KEYFILE=.phrase
 
-# The phrase, so http://localhost:8081/ works without it on the end of the URL.
+# The phrase, held on this machine so no browser ever needs it.
 #
 # Written here rather than committed, because this repository is public and the
 # phrase is the only thing standing between the internet and a bucket the
-# museum's booth reads. Gitignored, and readable by this user only. app.js
-# ignores it unless the page is actually being served from localhost.
+# museum's booth reads. Gitignored, and readable by this user only. serve.py
+# reads it; nothing serves it.
 #
 # Skipped when there is no terminal to ask at, which is how this runs from
 # start.sh under launchd. Prompting there would hang the booth's own startup
@@ -42,9 +41,8 @@ if [ ! -f "$KEYFILE" ] && [ -t 0 ]; then
     printf '  \033[31m✗\033[0m Nothing entered. Run again, or use the #phrase on the URL.\n' >&2
     exit 1
   fi
-  # Written through printf %s and JSON-quoted, so a phrase containing a quote
-  # cannot end the string early and turn the rest of it into code.
-  printf 'window.OVERLAY_KEY = %s;\n' "$(printf '%s' "$phrase" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" > "$KEYFILE"
+  # Plain text, read by serve.py and never sent to a browser.
+  printf '%s' "$phrase" > "$KEYFILE"
   chmod 600 "$KEYFILE"
   printf '  \033[32m✓\033[0m Saved to %s (gitignored, this user only)\n' "$KEYFILE"
 fi
@@ -59,11 +57,10 @@ LAN=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null |
 
 printf '\n\033[1mOverlay uploader\033[0m\n'
 printf '  \033[32m✓\033[0m On this Mac:   http://localhost:%s/\n' "$PORT"
-printf '                    no phrase needed, %s supplies it\n' "$KEYFILE"
 if [ -n "$LAN" ]; then
-  printf '  \033[32m✓\033[0m On the wifi:   http://%s:%s/#PHRASE\n' "$LAN" "$PORT"
-  printf '                    replace PHRASE with the four words\n'
+  printf '  \033[32m✓\033[0m On the wifi:   http://%s:%s/\n' "$LAN" "$PORT"
 fi
+printf '    No phrase on either: this server attaches it.\n'
 printf '    Ctrl-C to stop.\n\n'
 
 exec python3 serve.py "$PORT"

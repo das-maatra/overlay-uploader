@@ -51,15 +51,23 @@ you only, and honoured by the page **only** when it is being served from
 localhost. That last part is what stops the file authenticating the published
 page if it were ever committed by mistake.
 
-It is reachable from any device on the same wifi, the way the booth is. From
-another device the phrase does go in the URL, `http://<mac-ip>:8081/#phrase`,
-because `local-key.js` is served to this machine only and the page trusts it
-only when the hostname is localhost. `serve.sh` prints both links.
+It is reachable from any device on the same wifi, the way the booth is, and
+**no device needs the phrase**. `serve.sh` prints both links.
 
-The serving is done by `serve.py`, not `python -m http.server`. That one hands
-out every file under this folder, `.git` and the whole commit history included,
-to whoever can reach the port. `serve.py` answers for three files and 404s
-everything else.
+That works because `serve.py` does two jobs: it serves the page, and it proxies
+the page's `/api` calls to the Worker with the phrase attached. The phrase lives
+in `.phrase` on that machine, gitignored and readable by you only. It is never
+sent to a browser and never served over the network, so what the wifi gets is
+the use of the tool, not the credential.
+
+The consequence is deliberate: anyone on the same network who opens that address
+can add and delete frames with nothing to prove. That is the booth's own
+posture, which listens on every interface with no password at all. On a venue
+network, treat the two the same way.
+
+`serve.py` rather than `python -m http.server`, because that one hands out every
+file under this folder, `.git` and the whole commit history included, to whoever
+can reach the port. This answers for an allowlist and 404s everything else.
 
 The booth's `start.sh` starts this automatically when the folder is checked out
 beside it, so it comes up with the booth.

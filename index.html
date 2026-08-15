@@ -236,12 +236,12 @@ button.primary:hover:not(:disabled) { background: var(--flame); border-color: va
 <body>
 <div id="root"></div>
 <!--
-  Optional, and absent everywhere except a local checkout. ./serve.sh writes it,
-  .gitignore keeps it out of this repository, and app.js only honours it when
-  the page is being served from localhost. On GitHub Pages this 404s, which the
-  browser reports in the console and otherwise ignores.
+  Served only by serve.py, and only when that machine has a phrase to proxy
+  with. It carries no secret, just a flag saying "this page is behind a local
+  server, send the API calls there". On GitHub Pages it 404s, which the browser
+  notes in the console and otherwise ignores.
 -->
-<script src="local-key.js" onerror="this.remove()"></script>
+<script src="local-config.js" onerror="this.remove()"></script>
 <script src="app.js"></script>
 </body>
 </html>
